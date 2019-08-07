@@ -59,6 +59,7 @@ extension Section {
 
 enum AnyDecorationType: DecorationType {
     case ticket
+    case form
 }
 
 struct AnySection: Section {
@@ -78,6 +79,10 @@ let section = AnySection {
     Decoration(type: AnyDecorationType.ticket) {
         AnySpace()
         AnyCell()
+        Decoration(type: AnyDecorationType.form) {
+            AnySpace()
+            AnyCell()
+        }
     }
 }
 print(section.cells) // 3 cells
