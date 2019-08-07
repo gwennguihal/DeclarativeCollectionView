@@ -98,30 +98,22 @@ struct Decoration: Content {
 enum AnyDecorationType: DecorationType {
     case ticket
 }
-    
 
 @_functionBuilder
-class DecorationBuilder {
-    static func buildBlock(type: DecorationType,_ contents: Content...) -> Decoration {
-        return Decoration(type: type, contents: contents)
-    }
-}
-
-@_functionBuilder
-class SectionBuilder {
+class ContentBuilder {
     static func buildBlock(_ contents: Content...) -> [Content] {
         return contents
     }
 }
 
 extension Decoration {
-    init(@DecorationBuilder _ builder: () -> Decoration) {
-        
+    init(type: DecorationType, @ContentBuilder _ builder: () -> [Content]) {
+        self.init(type: type, contents: builder())
     }
 }
 
 extension Section {
-    init(@SectionBuilder _ builder: () -> [Content]) {
+    init(@ContentBuilder _ builder: () -> [Content]) {
         let contents = builder()
         var cells = [Cell]()
         var spaces = [Space]()
@@ -163,6 +155,7 @@ let section = AnySection {
 }
 print(section.cells) // 3 cells
 print(section.spaces) // 1 space
+print(section.decorations) // 1 space
 
 
 
