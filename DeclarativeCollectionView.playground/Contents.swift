@@ -1,7 +1,14 @@
 import Foundation
 import SwiftUI
 
-protocol Content {}
+protocol Content {
+    var contents: [Content]? { get }
+}
+extension Content {
+    var contents: [Content]? {
+        nil
+    }
+}
 
 protocol Cell: Content {
 }
@@ -43,11 +50,45 @@ protocol Section {
     init(cells: [Int: Cell], spaces: [Int: Space], decorations: [Int: Decoration])
 }
 
+struct Map<Data: Collection, T: Content>: Content {
+    var data: Data
+    var builder: (Data.Element) -> T
+    init(_ data: Data, _ builder: @escaping (Data.Element) -> T) {
+        self.data = data
+        self.builder = builder
+    }
+    var contents: [Content]? {
+        var contents = [Content]()
+        data.forEach {
+            contents.append( builder($0) )
+        }
+        return contents
+    }
+}
+
 @_functionBuilder
 class ContentBuilder {
     static func buildBlock(_ contents: Content...) -> [Content] {
+        print("0")
         return contents
     }
+    static func buildBlock(_ content: Content) -> Content {
+        print("1")
+        return content
+    }
+    static func buildBlock(_ contents: [Content]) -> [Content] {
+        print("2")
+        return contents
+    }
+//    static func buildBlock<Data: Collection, T: Content>(_ Map: Map<Data, T>) -> [Content] {
+//        print("3")
+//        var contents = [Content]()
+//        Map.data.forEach {
+//            contents.append( Map.builder($0) )
+//        }
+//        print(contents)
+//        return contents
+//    }
 }
 
 class DataSource {
@@ -91,16 +132,20 @@ extension Section {
     
     private static func invalidate(contents: [Content], index: inout Int, cells: inout [Int: Cell], spaces: inout [Int: Space], decorations: inout [Int: Decoration]) {
         contents.forEach { content in
-            switch content {
-            case let space as Space:
+            print(content.contents)
+            switch (content, content.contents) {
+            case (let space as Space, nil):
                 spaces[index - 1] = space
-            case var decoration as Decoration:
+            case (var decoration as Decoration, nil):
                 decoration.startIndex = index - 1
                 decorations[index - 1] = decoration
                 invalidate(contents: decoration.contents, index: &index, cells: &cells, spaces: &spaces, decorations: &decorations)
-            case let cell as Cell:
+            case (let cell as Cell, nil):
                 cells[index] = cell
                 index += 1
+            case (_, .some(let contents)):
+                print(contents)
+                invalidate(contents: contents, index: &index, cells: &cells, spaces: &spaces, decorations: &decorations)
             default:
                 break
             }
@@ -121,9 +166,7 @@ struct AnySection: Section {
 
 struct AnyCell: Cell {}
 
-struct ForEach {
-    var collection: [Any]
-}
+let collection = [1,2,3]
 
 let dataSource = DataSource {
 
@@ -145,6 +188,9 @@ let dataSource = DataSource {
     AnySection {
         AnyCell()
         Space()
+        Map(collection) {_ in
+            AnyCell()
+        }
     }
     
 }
