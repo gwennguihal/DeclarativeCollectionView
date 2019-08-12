@@ -87,6 +87,14 @@ extension Declarative where Base: Collection {
     func map<T: Content>(_ builder: @escaping (Base.Element) -> T) -> Map<Base, T> {
         return Map(self.base, builder)
     }
+    
+    func compactMap<T: Content>(_ builder: @escaping (Base.Element) -> T?) -> CompactMap<Base, T> {
+        return CompactMap(self.base, builder)
+    }
+    
+    func forEach(_ builder: @escaping (Base.Element) -> Void) -> ForEach<Base> {
+        return ForEach(self.base, builder)
+    }
 }
 
 struct Map<Data: Collection, T: Content>: Content {
@@ -97,26 +105,50 @@ struct Map<Data: Collection, T: Content>: Content {
         self.builder = builder
     }
     var contents: [Content]? {
-        var contents = [Content]()
-        data.forEach {
-            contents.append( builder($0) )
+        return data.map {
+            builder($0)
         }
-        return contents
+    }
+}
+
+struct CompactMap<Data: Collection, T: Content>: Content {
+    var data: Data
+    var builder: (Data.Element) -> T?
+    init(_ data: Data, _ builder: @escaping (Data.Element) -> T?) {
+        self.data = data
+        self.builder = builder
+    }
+    var contents: [Content]? {
+        return data.compactMap {
+            builder($0)
+        }
+    }
+}
+
+struct ForEach<Data: Collection>: Content {
+    var data: Data
+    var builder: (Data.Element) -> Void
+    init(_ data: Data, _ builder: @escaping (Data.Element) -> Void) {
+        self.data = data
+        self.builder = builder
+    }
+    var contents: [Content]? {
+        data.forEach {
+            builder($0)
+        }
+        return nil
     }
 }
 
 @_functionBuilder
 class ContentBuilder {
     static func buildBlock(_ contents: Content...) -> [Content] {
-        print("0")
         return contents
     }
     static func buildBlock(_ content: Content) -> Content {
-        print("1")
         return content
     }
     static func buildBlock(_ contents: [Content]) -> [Content] {
-        print("2")
         return contents
     }
 }
@@ -217,6 +249,15 @@ let dataSource = DataSource {
         Space()
         [1,2,3].ui.map { _ in
             AnyCell()
+        }
+        [1,2,3].ui.compactMap { element -> AnyCell? in
+            guard element % 2 == 0 else {
+                return nil
+            }
+            return AnyCell()
+        }
+        [1,2,3].ui.forEach {
+            print($0)
         }
     }
 }
