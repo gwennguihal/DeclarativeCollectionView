@@ -50,41 +50,40 @@ protocol Section {
     init(cells: [Int: Cell], spaces: [Int: Space], decorations: [Int: Decoration])
 }
 
-public struct Collorive<Base> {
+public struct Declarative<Base> {
     public let base: Base
     public init(_ base: Base) {
         self.base = base
     }
 }
 
-public protocol ColloriveCompatible {
+public protocol DeclarativeCompatible {
     associatedtype CompatibleType
-    static var cr: Collorive<CompatibleType>.Type { get set }
-    var cr: Collorive<CompatibleType> { get set }
+    static var ui: Declarative<CompatibleType>.Type { get set }
+    var ui: Declarative<CompatibleType> { get set }
 }
 
-extension ColloriveCompatible {
+extension DeclarativeCompatible {
     /// Reactive extensions.
-    public static var cr: Collorive<Self>.Type {
+    public static var ui: Declarative<Self>.Type {
         get {
-            return Collorive<Self>.self
+            return Declarative<Self>.self
         }
         set {}
     }
 
     /// Reactive extensions.
-    public var cr: Collorive<Self> {
+    public var ui: Declarative<Self> {
         get {
-            return Collorive(self)
+            return Declarative(self)
         }
         set {}
     }
 }
 
 /// Extend NSObject with `rx` proxy.
-extension Array: ColloriveCompatible { }
-
-extension Collorive where Base: Collection {
+extension Array: DeclarativeCompatible { }
+extension Declarative where Base: Collection {
     func map<T: Content>(_ builder: @escaping (Base.Element) -> T) -> Map<Base, T> {
         return Map(self.base, builder)
     }
@@ -216,7 +215,7 @@ let dataSource = DataSource {
     AnySection {
         AnyCell()
         Space()
-        [1,2,3].cr.map { _ in
+        [1,2,3].ui.map { _ in
             AnyCell()
         }
     }
