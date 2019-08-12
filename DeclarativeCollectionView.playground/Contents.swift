@@ -50,6 +50,46 @@ protocol Section {
     init(cells: [Int: Cell], spaces: [Int: Space], decorations: [Int: Decoration])
 }
 
+public struct Collorive<Base> {
+    public let base: Base
+    public init(_ base: Base) {
+        self.base = base
+    }
+}
+
+public protocol ColloriveCompatible {
+    associatedtype CompatibleType
+    static var cr: Collorive<CompatibleType>.Type { get set }
+    var cr: Collorive<CompatibleType> { get set }
+}
+
+extension ColloriveCompatible {
+    /// Reactive extensions.
+    public static var cr: Collorive<Self>.Type {
+        get {
+            return Collorive<Self>.self
+        }
+        set {}
+    }
+
+    /// Reactive extensions.
+    public var cr: Collorive<Self> {
+        get {
+            return Collorive(self)
+        }
+        set {}
+    }
+}
+
+/// Extend NSObject with `rx` proxy.
+extension Array: ColloriveCompatible { }
+
+extension Collorive where Base: Collection {
+    func map<T: Content>(_ builder: @escaping (Base.Element) -> T) -> Map<Base, T> {
+        return Map(self.base, builder)
+    }
+}
+
 struct Map<Data: Collection, T: Content>: Content {
     var data: Data
     var builder: (Data.Element) -> T
@@ -80,15 +120,6 @@ class ContentBuilder {
         print("2")
         return contents
     }
-//    static func buildBlock<Data: Collection, T: Content>(_ Map: Map<Data, T>) -> [Content] {
-//        print("3")
-//        var contents = [Content]()
-//        Map.data.forEach {
-//            contents.append( Map.builder($0) )
-//        }
-//        print(contents)
-//        return contents
-//    }
 }
 
 class DataSource {
@@ -132,7 +163,6 @@ extension Section {
     
     private static func invalidate(contents: [Content], index: inout Int, cells: inout [Int: Cell], spaces: inout [Int: Space], decorations: inout [Int: Decoration]) {
         contents.forEach { content in
-            print(content.contents)
             switch (content, content.contents) {
             case (let space as Space, nil):
                 spaces[index - 1] = space
@@ -144,7 +174,6 @@ extension Section {
                 cells[index] = cell
                 index += 1
             case (_, .some(let contents)):
-                print(contents)
                 invalidate(contents: contents, index: &index, cells: &cells, spaces: &spaces, decorations: &decorations)
             default:
                 break
@@ -166,7 +195,6 @@ struct AnySection: Section {
 
 struct AnyCell: Cell {}
 
-let collection = [1,2,3]
 
 let dataSource = DataSource {
 
@@ -188,11 +216,10 @@ let dataSource = DataSource {
     AnySection {
         AnyCell()
         Space()
-        Map(collection) {_ in
+        [1,2,3].cr.map { _ in
             AnyCell()
         }
     }
-    
 }
 
 // Build
