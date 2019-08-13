@@ -37,21 +37,18 @@ let dataSource = DataSource {
         [1,2,3].ui.map { _ in
             Container {
                 AnyCell()
-                Space()
+                AnySpace()
             }
         }
         [1,2,3].ui.compactMap { element -> AnyCell? in
-            guard element % 2 == 0 else {
+            guard element % 2 != 0 else {
                 return nil
             }
             return AnyCell()
         }
-        if [1,2,3].count == 3 {
-            AnyCell()
+        [1,2,3].ui.forEach {
+            print($0)
         }
-//        [1,2,3].ui.forEach {
-//            print($0)
-//        }
     }
 }
 
